@@ -1,0 +1,51 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+services:
+  cart:
+    networks:
+      - app-network
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      API_KEY: $API_KEY
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    networks:
+      - app-network
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+  pgadmin:
+    networks:
+      - app-network
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: email@ex.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+networks:
+  app-network:
+    driver: bridge
